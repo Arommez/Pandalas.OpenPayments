@@ -1,0 +1,27 @@
+<?php
+require_once _DIR_ . '/../vendor/autoload.php';
+use Twilio\Rest\Client;
+
+function generarOTP($longitud = 6) {
+    return str_pad(rand(0, pow(10, $longitud) - 1), $longitud, '0', STR_PAD_LEFT);
+}
+
+function enviarOTP($telefono, $otp) {
+    $sid = 'TU_TWILIO_SID';
+    $token = 'TU_TWILIO_AUTH_TOKEN';
+    $from = 'TU_NUMERO_TWILIO_VERIFICADO';
+
+    $client = new Client($sid, $token);
+
+    try {
+        $client->messages->create($telefono, [
+            'from' => $from,
+            'body' => "Tu código OTP es: $otp"
+        ]);
+        return true;
+    } catch (Exception $e) {
+        error_log("Error enviando SMS: " . $e->getMessage());
+        return false;
+    }
+}
+?>

@@ -1,0 +1,22 @@
+<?php
+require 'conexion.php';
+
+$rfc = $_POST['rfc'];
+$otp = $_POST['otp'];
+
+$stmt = $conn->prepare("SELECT otp, otp_expiracion FROM clientes WHERE rfc = ?");
+$stmt->bind_param("s", $rfc);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    die("Cliente no encontrado.");
+}
+
+$cliente = $result->fetch_assoc();
+if ($cliente['otp'] === $otp && strtotime($cliente['otp_expiracion']) > time()) {
+    echo "✅ OTP verificado correctamente. Puedes continuar al pago.";
+} else {
+    echo "❌ OTP inválido o expirado.";
+}
+?>

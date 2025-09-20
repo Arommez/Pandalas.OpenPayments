@@ -1,0 +1,64 @@
+<?php
+function apiRequest($url, $method = 'GET', $data = null, $token = null) {
+    $ch = curl_init($url);
+    $headers = [
+        'Accept: application/json'
+    ];
+
+    if ($token) $headers[] = "Authorization: Bearer $token";
+
+    if ($method === 'POST') {
+        curl_setopt($ch, CURLOPT_POST, true);
+        if ($data) {
+            $jsonData = json_encode($data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+            $headers[] = 'Content-Type: application/json';
+        }
+    }
+
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    $res = curl_exec($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return [
+        'status' => $status,
+        'data' => json_decode($res, true)
+    ];
+}
+
+function crearIncomingPayment($paymentPointerUrl, $monto, $concepto, $token) {
+    return apiRequest(
+        "$paymentPointerUrl/incoming-payments",
+        'POST',
+        [
+            'amount' => ['currency' => 'USD', 'value' => (string)$monto],
+            'description' => $concepto
+        ],
+        $token
+    );
+}
+
+function crearQuote($paymentPointerUrl, $monto, $token) {
+    return apiRequest(
+        "$paymentPointerUrl/quotes",
+        'POST',
+        [
+            'receiver' => $paymentPointerUrl,
+            'sendAmount' => ['currency' => 'USD', 'value' => (string)$monto]
+        ],
+        $token
+    );
+}
+
+function enviarPago($quoteUrl, $token) {
+    return apiRequest(
+        $quoteUrl . '/pay',
+        'POST',
+        [],
+        $token
+    );
+}
+?>

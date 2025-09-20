@@ -1,0 +1,45 @@
+-- Crear base de datos
+CREATE DATABASE IF NOT EXISTS sistema_pagos;
+USE sistema_pagos;
+
+-- Tabla de clientes
+CREATE TABLE clientes (
+    rfc VARCHAR(13) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido_paterno VARCHAR(100) NOT NULL,
+    apellido_materno VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    wallet_address VARCHAR(255),
+    otp VARCHAR(6),
+    otp_expiracion DATETIME
+);
+
+-- Tabla de negocios
+CREATE TABLE negocios (
+    clave INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
+);
+
+-- Tabla de transacciones
+CREATE TABLE transacciones (
+    id_transaccion INT AUTO_INCREMENT PRIMARY KEY,
+    concepto VARCHAR(255) NOT NULL,
+    monto DECIMAL(10, 2) NOT NULL,
+    fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('pendiente', 'completado', 'fallido') DEFAULT 'pendiente',
+    wallet_address_destino VARCHAR(255),
+    incoming_payment_url VARCHAR(255),
+    quote_url VARCHAR(255),
+    outgoing_payment_url VARCHAR(255)
+);
+
+-- Tabla pertenece (relación muchos a muchos entre transacciones y negocios)
+CREATE TABLE pertenece (
+    id_per INT AUTO_INCREMENT PRIMARY KEY,
+    id_transaccion INT,
+    clave INT,
+    FOREIGN KEY (id_transaccion) REFERENCES transacciones(id_transaccion)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (clave) REFERENCES negocios(clave)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);

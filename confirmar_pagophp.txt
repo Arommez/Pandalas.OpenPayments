@@ -1,0 +1,35 @@
+<?php
+require 'conexion.php';
+require 'openpayments_real.php';
+
+$id_transaccion = $_POST['id_transaccion'];
+$token = 'TU_TOKEN_OPEN_PAYMENTS'; // Reemplaza con tu token real
+
+// Obtener quote_url desde la BD
+$stmt = $conn->prepare("SELECT quote_url FROM transacciones WHERE id_transaccion = ?");
+$stmt->bind_param("i", $id_transaccion);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    die("❌ Transacción no encontrada.");
+}
+
+$trans = $result->fetch_assoc();
+$quote_url = $trans['quote_url'];
+
+// Llamar a Open Payments para ejecutar el pago
+$pago = enviarPago($quote_url, $token);
+
+if ($pago['status'] === 200 || $pago['status'] === 202) {
+    // Actualizar estado
+    $stmt = $conn->prepare("UPDATE transacciones SET estado = 'completado', outgoing_payment_url = ? WHERE id_transaccion = ?");
+    $pago_url = $pago['data']['id'] ?? 'https://openpayments.fake/outgoing/' . uniqid();
+    $stmt->bind_param("si", $pago_url, $id_transaccion);
+    $stmt->execute();
+
+    echo "✅ Pago confirmado con éxito.";
+} else {
+    echo "❌ Error al confirmar pago: " . json_encode($pago['data']);
+}
+?>
